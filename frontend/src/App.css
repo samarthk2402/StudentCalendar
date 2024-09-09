@@ -1,0 +1,11 @@
+.app-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.logged-in-message {
+  font-size: 18px;
+  margin-top: 20px;
+}
