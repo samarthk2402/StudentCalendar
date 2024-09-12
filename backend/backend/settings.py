@@ -30,7 +30,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-SITE_ID=1
+SITE_ID=2
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -46,18 +46,25 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google'
+    'allauth.socialaccount.providers.google',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'rest_framework.authtoken'
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
+        "APP": {
+            'client_id': '1086056028133-gdsavhkbqdhnls4luen4ccteoaat7ogi.apps.googleusercontent.com',
+            'secret': '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'
+        },
         "SCOPE": [
             "profile",
             "email",
             "https://www.googleapis.com/auth/calendar"
         ],
         "AUTH_PARAMS": {
-            "access_type": "online",
+            "access_type": "offline",
         }
     }
 }
@@ -71,6 +78,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware'
 ]
 
 ALLOWED_HOSTS=['*']
@@ -152,9 +160,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.accounts.auth_backends.AuthenticationBackend"
+    "allauth.account.auth_backends.AuthenticationBackend"
 )
 
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+GOOGLE_CLIENT_ID = '1086056028133-gdsavhkbqdhnls4luen4ccteoaat7ogi.apps.googleusercontent.com'
+GOOGLE_CLIENT_SECRET = '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'
+GOOGLE_REDIRECT_URI = 'http://127.0.0.1:8000/google/callback/'
+
+import os
+
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+FRONTEND_DOMAIN = "http://localhost:5173/"

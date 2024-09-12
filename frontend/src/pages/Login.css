@@ -1,0 +1,68 @@
+/* Apply styles to the entire body to center content */
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f4f4f4; /* Light background color */
+  font-family: "Arial", sans-serif; /* Font style for the page */
+}
+
+/* Style the container for the login content */
+.login-container {
+  text-align: center;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 300px; /* Adjust the width as needed */
+  box-sizing: border-box; /* Ensure padding and borders are included in width */
+}
+
+/* Style the Google Sign-In button */
+.google-signin-button {
+  background-color: #4285f4; /* Google blue */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center content horizontally */
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none; /* Ensure no underline */
+  outline: none; /* Remove default focus outline */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Optional shadow */
+  transition: background-color 0.3s ease; /* Smooth hover transition */
+  width: 100%; /* Ensure button fills container */
+}
+
+/* Google Sign-In button hover state */
+.google-signin-button:hover {
+  background-color: #357ae8; /* Darker blue on hover */
+}
+
+/* Google icon style */
+.google-icon {
+  background: url("https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg")
+    no-repeat center;
+  background-size: 20px 20px;
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: middle; /* Align icon vertically with text */
+}
+
+a,
+a:hover,
+a:focus,
+a:active {
+  text-decoration: none;
+  color: inherit;
+}
