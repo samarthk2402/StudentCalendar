@@ -22,7 +22,7 @@ body {
 
 /* Style the Google Sign-In button */
 .google-signin-button {
-  background-color: #4285f4; /* Google blue */
+  background-color: #4c4c4c; /* Google blue */
   color: white;
   border: none;
   border-radius: 4px;
@@ -44,12 +44,12 @@ body {
 
 /* Google Sign-In button hover state */
 .google-signin-button:hover {
-  background-color: #357ae8; /* Darker blue on hover */
+  background-color: #393939; /* Darker blue on hover */
 }
 
 /* Google icon style */
 .google-icon {
-  background: url("https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg")
+  background: url("https://www.vectorlogo.zone/logos/google/google-icon.svg")
     no-repeat center;
   background-size: 20px 20px;
   width: 24px;

@@ -25,8 +25,6 @@ SECRET_KEY = 'django-insecure-57kkkev-6j%1b^rznwmz9k54@yvvkkmey!955ru$5b^r9p8jpq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -42,47 +40,30 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'corsheaders',
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'dj_rest_auth',
-    'dj_rest_auth.registration',
-    'rest_framework.authtoken'
+    'rest_framework_simplejwt'
 ]
 
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            'client_id': '1086056028133-gdsavhkbqdhnls4luen4ccteoaat7ogi.apps.googleusercontent.com',
-            'secret': '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'
-        },
-        "SCOPE": [
-            "profile",
-            "email",
-            "https://www.googleapis.com/auth/calendar"
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "offline",
-        }
-    }
+REST_FRAMEWORK = {
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+
 }
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware'
+    # 'allauth.account.middleware.AccountMiddleware'
 ]
 
-ALLOWED_HOSTS=['*']
-CORS_ORIGIN_ALLOW_ALL = True
+
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -160,7 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend"
+    # "allauth.account.auth_backends.AuthenticationBackend"
 )
 
 
@@ -175,4 +156,48 @@ import os
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-FRONTEND_DOMAIN = "http://localhost:5173/"
+FRONTEND_DOMAIN = "http://localhost:5173"
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+
+# SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'None'  # Make sure this is 'None' for cross-origin requests
+SESSION_COOKIE_SECURE = False  # Set this to True in production with HTTPS
+SESSION_COOKIE_AGE = 3600
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+]
+CSRF_SAMESITE = 'None'
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8000"
+]
+
+# CORS_ALLOW_CREDENTIALS = True
+
+# CORS_ALLOWED_HEADERS = [
+#     'content-type',
+#     'authorization',
+#     'x-csrftoken',
+#     # Add any other headers you expect
+# ]
+
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+]
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_CREDENTIALS = True
+SESSION_COOKIE_DOMAIN = 'localhost'
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+from datetime import timedelta
+
+SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1)}
