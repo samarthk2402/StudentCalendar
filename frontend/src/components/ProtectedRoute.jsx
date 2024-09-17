@@ -24,6 +24,8 @@ const ProtectedRoute = ({ children }) => {
   const navigate = useNavigate();
 
   const refreshToken = async () => {
+    console.log(localStorage.getItem("REFRESH_TOKEN"));
+
     const options = {
       method: "POST",
       headers: {
