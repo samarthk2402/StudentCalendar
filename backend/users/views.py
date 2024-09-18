@@ -123,9 +123,11 @@ class GoogleProfile(APIView):
         # Extract user information
         email = userinfo.get("email")
         name = userinfo.get("name")
+        profile_picture = userinfo.get("picture")
         
         return Response({
             "name": name,
-            "email": email
+            "email": email,
+            "picture_url": profile_picture
         }, status=200)
 
