@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Navbar, Container } from "react-bootstrap";
 import "./Home.css";
+import Dashboard from "../components/Dashboard";
 
 const Home = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -25,7 +26,6 @@ const Home = () => {
       setName(data.name);
       setEmail(data.email);
       setProfilePictureUrl(data.picture_url);
-      console.log(data.picture_url);
     } catch (err) {
       console.log(err);
     }
@@ -37,7 +37,7 @@ const Home = () => {
 
   return (
     <>
-      <Navbar className="bg-body-tertiary">
+      <Navbar className="bg-body-secondary w-100">
         <Container fluid>
           <Navbar.Brand href="#home">Student Calendar</Navbar.Brand>
           <Navbar.Toggle />
@@ -47,6 +47,8 @@ const Home = () => {
           </Navbar.Collapse>
         </Container>
       </Navbar>
+
+      <Dashboard />
     </>
   );
 };

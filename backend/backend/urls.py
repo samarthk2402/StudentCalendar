@@ -8,4 +8,5 @@ urlpatterns = [
     path('google/callback/', GoogleOAuth2CallbackView.as_view(), name='google_callback'),
     path('user/google/profile', GoogleProfile.as_view(), name='google_profile'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('gcalendar/', include('gcalendar.urls'))
 ]

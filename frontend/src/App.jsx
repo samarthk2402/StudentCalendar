@@ -4,10 +4,11 @@ import "./App.css";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
+import { Container } from "react-bootstrap";
 
 function App() {
   return (
-    <div className="app-container" data-bs-theme="dark">
+    <>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route
@@ -19,7 +20,7 @@ function App() {
           }
         />
       </Routes>
-    </div>
+    </>
   );
 }
 
