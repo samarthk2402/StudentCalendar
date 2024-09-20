@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Navbar, Container } from "react-bootstrap";
+import { Navbar, Container, Col, Row } from "react-bootstrap";
 import "./Home.css";
 import Dashboard from "../components/Dashboard";
+import AddHomework from "../components/AddHomework";
 
 const Home = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -47,8 +48,19 @@ const Home = () => {
           </Navbar.Collapse>
         </Container>
       </Navbar>
+      <Container fluid>
+        <Row>
+          {/* AddHomework takes up 3 columns (out of 12) */}
+          <Col xs={12} md={4}>
+            <AddHomework />
+          </Col>
 
-      <Dashboard />
+          {/* Dashboard takes up 9 columns (out of 12) */}
+          <Col xs={12} md={8}>
+            <Dashboard />
+          </Col>
+        </Row>
+      </Container>
     </>
   );
 };

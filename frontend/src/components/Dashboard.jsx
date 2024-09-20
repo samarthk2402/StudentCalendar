@@ -6,7 +6,6 @@ const Dashboard = () => {
 
   const [week, setWeek] = useState({});
   const [daysOfWeek, setDaysOfWeek] = useState([]);
-  const [calEvents, setCalEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const formatTime = (dateTimeString) => {
@@ -77,7 +76,6 @@ const Dashboard = () => {
         ...event,
         dayOfWeek: getDayOfWeek(event.start.dateTime),
       }));
-      setCalEvents(updatedEvents);
 
       let updatedWeek = { ...week };
 
@@ -131,9 +129,7 @@ const Dashboard = () => {
                               key={index}
                             >
                               {formatTime(event.start.dateTime) +
-                                " - " +
-                                formatTime(event.end.dateTime) +
-                                "  " +
+                                "   " +
                                 event.summary}
                             </Card>
                           ))
