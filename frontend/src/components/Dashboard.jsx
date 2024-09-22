@@ -1,7 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import { Container, Row, Col, Card } from "react-bootstrap";
 
-const Dashboard = () => {
+const Dashboard = forwardRef((props, ref) => {
   const apiUrl = import.meta.env.VITE_API_URL;
 
   const [week, setWeek] = useState({});
@@ -86,7 +91,6 @@ const Dashboard = () => {
       }
 
       setWeek(updatedWeek);
-      console.log(updatedWeek);
       setLoading(false);
     } catch (err) {
       console.log(err);
@@ -96,6 +100,10 @@ const Dashboard = () => {
   useEffect(() => {
     getCalendar();
   }, [daysOfWeek]);
+
+  useImperativeHandle(ref, () => ({
+    getCalendar,
+  }));
 
   return (
     <Container fluid>
@@ -129,6 +137,8 @@ const Dashboard = () => {
                               key={index}
                             >
                               {formatTime(event.start.dateTime) +
+                                " - " +
+                                formatTime(event.end.dateTime) +
                                 "   " +
                                 event.summary}
                             </Card>
@@ -144,6 +154,6 @@ const Dashboard = () => {
       )}
     </Container>
   );
-};
+});
 
 export default Dashboard;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Navbar, Container, Col, Row } from "react-bootstrap";
 import "./Home.css";
 import Dashboard from "../components/Dashboard";
@@ -6,6 +6,13 @@ import AddHomework from "../components/AddHomework";
 
 const Home = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
+  const dashboardRef = useRef();
+
+  const callGetCalendar = () => {
+    if (dashboardRef.current) {
+      dashboardRef.current.getCalendar();
+    }
+  };
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -52,12 +59,12 @@ const Home = () => {
         <Row>
           {/* AddHomework takes up 3 columns (out of 12) */}
           <Col xs={12} md={4}>
-            <AddHomework />
+            <AddHomework onAdd={callGetCalendar} />
           </Col>
 
           {/* Dashboard takes up 9 columns (out of 12) */}
           <Col xs={12} md={8}>
-            <Dashboard />
+            <Dashboard ref={dashboardRef} />
           </Col>
         </Row>
       </Container>

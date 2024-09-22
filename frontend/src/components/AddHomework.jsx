@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Container, Button, Form } from "react-bootstrap";
 import { PlusLg } from "react-bootstrap-icons";
 
-const AddHomework = () => {
+const AddHomework = ({ onAdd }) => {
   const apiUrl = import.meta.env.VITE_API_URL;
   const [homeworkDescription, setHomeworkDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -28,6 +28,7 @@ const AddHomework = () => {
       const res = await fetch(apiUrl + "gcalendar/homework/add", options);
       const data = await res.json();
       window.alert(data.message);
+      onAdd();
     } catch (err) {
       console.log(err);
     }
