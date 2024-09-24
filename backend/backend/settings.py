@@ -149,11 +149,17 @@ AUTHENTICATION_BACKENDS = (
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
-GOOGLE_CLIENT_ID = '1086056028133-gdsavhkbqdhnls4luen4ccteoaat7ogi.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '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'
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 GOOGLE_REDIRECT_URI = 'http://127.0.0.1:8000/google/callback/'
 
-import os
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
@@ -200,5 +206,5 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 from datetime import timedelta
 
-SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7)}
