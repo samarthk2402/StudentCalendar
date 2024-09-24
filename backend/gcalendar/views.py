@@ -37,7 +37,7 @@ def addEventToCalendar(request, event):
 
     return event.get("id")
 
-def generate_free_time_slots(weekday_hours, weekend_hours, due_date, calendar_events):
+def generate_free_time_slots(weekday_hours, weekend_hours, due_date, calendar_events, buffer_time):
     timezone = pytz.timezone('Europe/London')
 
     # Convert due_date string to a datetime object
@@ -62,23 +62,42 @@ def generate_free_time_slots(weekday_hours, weekend_hours, due_date, calendar_ev
         else:
             start_hour, end_hour = weekend_hours  # Use weekend working hours
         
-        # Generate free time slots for each hour within the specified working hours
-        for hour in range(start_hour, end_hour):
-            start_time = current_date.replace(hour=hour)
-            end_time = start_time + timedelta(hours=1)
-            # Ensure we don't generate time slots past the due date
-            if end_time <= due_date + timedelta(days=1) and start_time > datetime.now(timezone):
-                conflicting_events = 0
-                for event in calendar_events:
-                    event_start = datetime.fromisoformat(event["start"]["dateTime"])
-                    event_end = datetime.fromisoformat(event["end"]["dateTime"])
-                    if (event_start > start_time and event_start < end_time) or (event_end > start_time and event_end <end_time):
-                        conflicting_events += 1
+        beginning_working_hour = current_date.replace(hour=start_hour)
+        end_working_hour = current_date.replace(hour=end_hour)
 
-                if conflicting_events == 0:
-                    free_time_slots.append((start_time.isoformat(), end_time.isoformat()))
+        start_time = beginning_working_hour
+        end_time = end_working_hour
+
+
+        conflicting_events = []
+
+        for event in calendar_events:
+            event_start = datetime.fromisoformat(event["start"]["dateTime"])
+            event_end = datetime.fromisoformat(event["end"]["dateTime"])
+            if (event_start > start_time and event_start < end_time) or (event_end > start_time and event_end <end_time):
+                conflicting_events.append(event)
+                print("Conflicting event: ", event.get("summary"))
+
+
+        for event in conflicting_events:
+            event_start = datetime.fromisoformat(event["start"]["dateTime"])
+            event_end = datetime.fromisoformat(event["end"]["dateTime"])
+            
+            if event_start == start_time:
+                start_time = event_end + buffer_time
+
+            if event_start > start_time:
+                if start_time > datetime.now(timezone):
+                    free_time_slots.append((start_time.isoformat(), event_start.isoformat()))
+                start_time = event_end + buffer_time
+
+        if start_time == beginning_working_hour or start_time < end_time:
+            if start_time > datetime.now(timezone):
+                free_time_slots.append((start_time.isoformat(), end_time.isoformat()))
+
         current_date += timedelta(days=1)
     
+    print(free_time_slots)
     return free_time_slots
 
 def getHomeworkTimings(request, homework):
@@ -96,17 +115,16 @@ def getHomeworkTimings(request, homework):
     
     events = events_result.get('items', [])
 
-    free_slots = generate_free_time_slots((19, 21), (9, 12), homework["due_date"], events)
+    free_slots = generate_free_time_slots((19, 21), (9, 12), homework["due_date"], events, timedelta(minutes=15))
 
     timings = []
 
     # Split the string into hours, minutes, and seconds
     hours, minutes, seconds = map(int, homework["estimated_completion_time"].split(':'))
-    print(homework["estimated_completion_time"])
-    print(minutes)
 
     # Create a timedelta object
     time_needed = timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    
 
     for slot in free_slots:
         slot_start = datetime.fromisoformat(slot[0])
@@ -135,12 +153,10 @@ class AddHomework(APIView):
             homework_instance =  serializer.save()
 
             timings = getHomeworkTimings(request, serializer.data)
-            print(timings)
 
             ids = []
 
             for block in timings:
-                print(block)
                 new_homework = {
                     'summary': serializer.data.get("name"),
                     'start': {
@@ -262,7 +278,8 @@ class DeleteHomework(APIView):
             for event_id in homework.event_ids:
                 service.events().delete(calendarId='primary', eventId=event_id).execute()
         else:
-            service.events().delete(calendarId='primary', eventId=homework.event_id).execute()
+            if homework.event_id:
+                service.events().delete(calendarId='primary', eventId=homework.event_id).execute()
 
         homework.delete()
 
