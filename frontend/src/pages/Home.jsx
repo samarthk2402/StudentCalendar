@@ -3,10 +3,13 @@ import { Navbar, Container, Col, Row } from "react-bootstrap";
 import "./Home.css";
 import Dashboard from "../components/Dashboard";
 import AddHomework from "../components/AddHomework";
+import HomeworkList from "../components/HomeworkList";
 
 const Home = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
   const dashboardRef = useRef();
+
+  const [homework, setHomework] = useState(null);
 
   const callGetCalendar = () => {
     if (dashboardRef.current) {
@@ -39,8 +42,28 @@ const Home = () => {
     }
   };
 
+  const getHomeworks = async () => {
+    const options = {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("ACCESS_TOKEN")}`, // Send the token
+        "Content-Type": "application/json",
+      },
+    };
+
+    try {
+      const res = await fetch(apiUrl + "gcalendar/homework", options);
+      const data = await res.json();
+      console.log(data);
+      setHomework(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
     getGoogleProfile();
+    getHomeworks();
   }, []);
 
   return (
@@ -59,7 +82,19 @@ const Home = () => {
         <Row>
           {/* AddHomework takes up 3 columns (out of 12) */}
           <Col xs={12} md={4}>
-            <AddHomework onAdd={callGetCalendar} />
+            <AddHomework
+              onAdd={() => {
+                callGetCalendar();
+                getHomeworks();
+              }}
+            />
+            <HomeworkList
+              homeworks={homework}
+              onDelete={() => {
+                callGetCalendar();
+                getHomeworks();
+              }}
+            />
           </Col>
 
           {/* Dashboard takes up 9 columns (out of 12) */}

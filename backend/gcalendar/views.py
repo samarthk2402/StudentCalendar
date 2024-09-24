@@ -4,6 +4,7 @@ from googleapiclient.discovery import build  # Import build
 from google.oauth2.credentials import Credentials
 from django.conf import settings
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from users.models import UserCredentials
 from datetime import datetime, timedelta
@@ -33,6 +34,8 @@ def addEventToCalendar(request, event):
     service = build('calendar', 'v3', credentials=credentials)
     event = service.events().insert(calendarId='primary', body=event).execute()
     print("Event created: "+ event.get("summary"))
+
+    return event.get("id")
 
 def generate_free_time_slots(weekday_hours, weekend_hours, due_date, calendar_events):
     timezone = pytz.timezone('Europe/London')
@@ -129,10 +132,12 @@ class AddHomework(APIView):
         
         if serializer.is_valid():
             # Save the new instance to the database
-            serializer.save()
+            homework_instance =  serializer.save()
 
             timings = getHomeworkTimings(request, serializer.data)
             print(timings)
+
+            ids = []
 
             for block in timings:
                 print(block)
@@ -147,9 +152,17 @@ class AddHomework(APIView):
                         'timeZone': 'Europe/London'
                     }
                 }
-
         
-                addEventToCalendar(request, new_homework)
+                ids.append(addEventToCalendar(request, new_homework))
+
+
+            if len(ids)>1:
+                # Update the Homework instance with the event_id
+                homework_instance.event_ids = ids
+                homework_instance.save()
+            else:
+                homework_instance.event_id = ids[0]
+                homework_instance.save()
 
 
             return Response({"message": f"{request.data.get("name")} was successfully added to your calendar"}, status=status.HTTP_201_CREATED)
@@ -208,3 +221,50 @@ class GetCalendar(APIView):
 
 
         return Response({"events": events_response}, status=200)
+    
+class GetHomeworks(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = HomeworkSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        return user.homeworks.all()
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        # Add the 'id' to the serialized data manually
+        response_data = []
+        for homework, data in zip(queryset, serializer.data):
+            data_with_id = {**data, 'id': homework.id}
+            response_data.append(data_with_id)
+
+        return Response(response_data)
+    
+class DeleteHomework(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, format=None):
+        homework_id = request.data.get("id")
+        homework = Homework.objects.get(id=homework_id)
+
+        if homework == None:
+            return Response({"Bad Request" : "Homework does not exist..."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get user's Google credentials
+        credentials = get_user_google_credentials(request.user)
+
+        # Use the credentials to build the Google Calendar service object
+        service = build('calendar', 'v3', credentials=credentials)
+
+        if len(homework.event_ids) > 0:
+            for event_id in homework.event_ids:
+                service.events().delete(calendarId='primary', eventId=event_id).execute()
+        else:
+            service.events().delete(calendarId='primary', eventId=homework.event_id).execute()
+
+        homework.delete()
+
+        return Response({"message": "Deleted successfully!"}, status=204)
+
