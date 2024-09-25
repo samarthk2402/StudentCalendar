@@ -104,6 +104,11 @@ def getHomeworkTimings(request, homework):
     credentials = get_user_google_credentials(request.user)
     service = build('calendar', 'v3', credentials=credentials)
 
+    timezone = pytz.timezone('Europe/London')
+
+    weekday_work_hours = (19, 21)
+    weekend_work_hours = (9, 12)
+
     # Fetch calendar events from now till the due date
     events_result = service.events().list(
             calendarId='primary',
@@ -115,7 +120,7 @@ def getHomeworkTimings(request, homework):
     
     events = events_result.get('items', [])
 
-    free_slots = generate_free_time_slots((19, 21), (9, 12), homework["due_date"], events, timedelta(minutes=15))
+    free_slots = generate_free_time_slots(weekday_work_hours, weekend_work_hours, homework["due_date"], events, timedelta(minutes=15))
 
     timings = []
 
@@ -125,19 +130,68 @@ def getHomeworkTimings(request, homework):
     # Create a timedelta object
     time_needed = timedelta(hours=hours, minutes=minutes, seconds=seconds)
     
+    max_time = timedelta(minutes=45)
 
-    for slot in free_slots:
-        slot_start = datetime.fromisoformat(slot[0])
-        slot_end = datetime.fromisoformat(slot[1])
-        slot_duration = slot_end-slot_start
-        print("Slot duration: ", slot_duration.total_seconds())
-        print("Time Needed: ", time_needed.total_seconds())
-        if slot_duration >= time_needed:
-            timings.append((slot_start.isoformat(), (slot_start + time_needed).isoformat()))
-            break
-        elif slot_duration < time_needed:
-            timings.append((slot_start.isoformat(), slot_end.isoformat()))
-            time_needed -= slot_duration
+    if time_needed > max_time:
+
+        days_until_due = []
+
+        for start, end in free_slots:
+
+            start_date = datetime.fromisoformat(start).date()
+            if not start_date in days_until_due:
+                days_until_due.append(start_date)
+
+        spaced_out_time = len(days_until_due) * max_time
+
+        if spaced_out_time >= time_needed:
+            for day in days_until_due:
+                # List to store the intervals that match the target date
+                slots_on_this_day = []
+                time_needed = max_time
+
+                # Find all intervals where the start or end date matches the target date
+                for start, end in free_slots:
+                    # Check if the start or end date matches the target date
+                    if datetime.fromisoformat(start).date() == day:
+                        slots_on_this_day.append((start, end))
+
+                for slot in slots_on_this_day:
+                    slot_start = datetime.fromisoformat(slot[0])
+                    slot_end = datetime.fromisoformat(slot[1])
+                    slot_duration = slot_end-slot_start
+                    if slot_duration >= time_needed:
+                        timings.append((slot_start.isoformat(), (slot_start + time_needed).isoformat()))
+                        break
+                    elif slot_duration < time_needed:
+                        timings.append((slot_start.isoformat(), slot_end.isoformat()))
+                        time_needed -= slot_duration
+
+        else:
+            print("Homework cannot be spaced out")
+    else:
+
+        for slot in free_slots:
+            slot_start = datetime.fromisoformat(slot[0])
+            slot_end = datetime.fromisoformat(slot[1])
+            slot_duration = slot_end-slot_start
+            print("Slot duration: ", slot_duration.total_seconds())
+            print("Time Needed: ", time_needed.total_seconds())
+            if slot_duration >= time_needed:
+                timings.append((slot_start.isoformat(), (slot_start + time_needed).isoformat()))
+                break
+
+    if not len(timings) > 0:
+        for slot in free_slots:
+            slot_start = datetime.fromisoformat(slot[0])
+            slot_end = datetime.fromisoformat(slot[1])
+            slot_duration = slot_end-slot_start
+            if slot_duration >= time_needed:
+                timings.append((slot_start.isoformat(), (slot_start + time_needed).isoformat()))
+                break
+            elif slot_duration < time_needed:
+                timings.append((slot_start.isoformat(), slot_end.isoformat()))
+                time_needed -= slot_duration
             
     return timings
 
