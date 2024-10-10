@@ -9,3 +9,5 @@ class Homework(models.Model):
     due_date = models.DateTimeField()
     event_id = models.CharField(max_length=255, blank=True, null=True)
     event_ids = models.JSONField(default=list, blank=True, null=True)  # Store multiple event IDs as a list
+    timings = models.JSONField(default=list, blank=True, null=True)
+    priority = models.IntegerField(default=0)

@@ -6,7 +6,7 @@ import React, {
 } from "react";
 import { Container, Row, Col, Card } from "react-bootstrap";
 
-const Dashboard = forwardRef((props, ref) => {
+const Dashboard = forwardRef(({ homeworks }, ref) => {
   const apiUrl = import.meta.env.VITE_API_URL;
 
   const [week, setWeek] = useState({});
@@ -65,6 +65,16 @@ const Dashboard = forwardRef((props, ref) => {
     return daysOfWeek[adjustedIndex];
   };
 
+  const inHomeworks = (event) => {
+    for (let homework of homeworks) {
+      if (event.id === homework.event_id) {
+        return true;
+      } else if (homework.event_ids.includes(event.id)) {
+        return true;
+      }
+    }
+  };
+
   const getCalendar = async () => {
     const options = {
       method: "GET",
@@ -117,9 +127,9 @@ const Dashboard = forwardRef((props, ref) => {
               <Row key={index} className="mb-3">
                 <Col xs={12} md={12}>
                   <Card
-                    className="h-100"
                     style={{
-                      border: "1px solid #ddd", // Thin outline
+                      border: "1px solid #ddd", // Thin outline,
+                      borderColor: "var(--bs-secondary)",
                       borderRadius: "10px", // Curved edges
                       padding: "10px", // Padding inside the card
                     }}
@@ -129,7 +139,11 @@ const Dashboard = forwardRef((props, ref) => {
                       {week[day] && week[day].length > 0
                         ? week[day].map((event, index) => (
                             <Card
-                              className="bg-secondary text-white"
+                              className={
+                                inHomeworks(event)
+                                  ? "bg-primary text-white"
+                                  : "bg-secondary text-white"
+                              }
                               style={{
                                 paddingLeft: "10px", // Increase padding
                                 borderRadius: "15px", // Increase border radius

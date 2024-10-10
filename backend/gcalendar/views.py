@@ -37,11 +37,18 @@ def addEventToCalendar(request, event):
 
     return event.get("id")
 
-def generate_free_time_slots(weekday_hours, weekend_hours, due_date, calendar_events, buffer_time):
-    timezone = pytz.timezone('Europe/London')
+def updateCalendarEventTimings(request, event_id, timings):
+    # Get user's Google credentials
+    credentials = get_user_google_credentials(request.user)
 
-    # Convert due_date string to a datetime object
-    due_date = datetime.fromisoformat(due_date)
+    # Use the credentials to build the Google Calendar service object
+    service = build('calendar', 'v3', credentials=credentials)
+    event = service.events().update(calendarId='primary', eventId=event_id, body=timings).execute()
+    print("Event updated: ", event.get("summary"))
+
+
+def generate_free_time_slots(request, weekday_hours, weekend_hours, due_date, calendar_events, buffer_time, priority):
+    timezone = pytz.timezone('Europe/London')
 
     # Check if due_date is naive and localize if necessary
     if due_date.tzinfo is None:
@@ -74,21 +81,30 @@ def generate_free_time_slots(weekday_hours, weekend_hours, due_date, calendar_ev
         for event in calendar_events:
             event_start = datetime.fromisoformat(event["start"]["dateTime"])
             event_end = datetime.fromisoformat(event["end"]["dateTime"])
-            if (event_start > start_time and event_start < end_time) or (event_end > start_time and event_end <end_time):
+            if (event_start > start_time and event_start < end_time) or (event_end > start_time and event_end <end_time) or (event_start < start_time and event_end > end_time):
                 conflicting_events.append(event)
-                print("Conflicting event: ", event.get("summary"))
 
+        for event in conflicting_events: # Dont take into account homeworks as they will be rearranged according to priority
+            for homework in request.user.homeworks.all():
+                if event["id"] == homework.event_id or event["id"] in homework.event_ids:
+                    event_start = datetime.fromisoformat(event["start"]["dateTime"])
+                    event_end = datetime.fromisoformat(event["end"]["dateTime"])
+                    if homework.priority > priority:
+                        print("Rearranging homework: ", event.get("summary"))
+                        conflicting_events.remove(event)
 
         for event in conflicting_events:
+            print("Conflicting event: ", event.get("summary"))
             event_start = datetime.fromisoformat(event["start"]["dateTime"])
             event_end = datetime.fromisoformat(event["end"]["dateTime"])
             
             if event_start == start_time:
                 start_time = event_end + buffer_time
-
-            if event_start > start_time:
+            elif event_start > start_time:
                 if start_time > datetime.now(timezone):
                     free_time_slots.append((start_time.isoformat(), event_start.isoformat()))
+                start_time = event_end + buffer_time
+            elif event_start < start_time:
                 start_time = event_end + buffer_time
 
         if start_time == beginning_working_hour or start_time < end_time:
@@ -97,14 +113,12 @@ def generate_free_time_slots(weekday_hours, weekend_hours, due_date, calendar_ev
 
         current_date += timedelta(days=1)
     
-    print(free_time_slots)
+
     return free_time_slots
 
 def getHomeworkTimings(request, homework):
     credentials = get_user_google_credentials(request.user)
     service = build('calendar', 'v3', credentials=credentials)
-
-    timezone = pytz.timezone('Europe/London')
 
     weekday_work_hours = (19, 21)
     weekend_work_hours = (9, 12)
@@ -113,22 +127,19 @@ def getHomeworkTimings(request, homework):
     events_result = service.events().list(
             calendarId='primary',
             timeMin=datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0).isoformat() + 'Z',
-            timeMax=homework.get("due_date"),
+            timeMax=homework.due_date.isoformat(),
             singleEvents=True,
             orderBy='startTime'
         ).execute()
     
     events = events_result.get('items', [])
 
-    free_slots = generate_free_time_slots(weekday_work_hours, weekend_work_hours, homework["due_date"], events, timedelta(minutes=15))
+    free_slots = generate_free_time_slots(request, weekday_work_hours, weekend_work_hours, homework.due_date, events, timedelta(minutes=15), homework.priority)
 
     timings = []
 
-    # Split the string into hours, minutes, and seconds
-    hours, minutes, seconds = map(int, homework["estimated_completion_time"].split(':'))
-
     # Create a timedelta object
-    time_needed = timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    time_needed = homework.estimated_completion_time
     
     max_time = timedelta(minutes=45)
 
@@ -144,11 +155,12 @@ def getHomeworkTimings(request, homework):
 
         spaced_out_time = len(days_until_due) * max_time
 
+
         if spaced_out_time >= time_needed:
             for day in days_until_due:
+                print("Time needed: ", time_needed)
                 # List to store the intervals that match the target date
                 slots_on_this_day = []
-                time_needed = max_time
 
                 # Find all intervals where the start or end date matches the target date
                 for start, end in free_slots:
@@ -160,12 +172,17 @@ def getHomeworkTimings(request, homework):
                     slot_start = datetime.fromisoformat(slot[0])
                     slot_end = datetime.fromisoformat(slot[1])
                     slot_duration = slot_end-slot_start
-                    if slot_duration >= time_needed:
-                        timings.append((slot_start.isoformat(), (slot_start + time_needed).isoformat()))
+                    if slot_duration >= max_time:
+                        if time_needed > max_time:
+                            timings.append((slot_start.isoformat(), (slot_start + max_time).isoformat()))
+                            time_needed -= max_time
+                        else:
+                            timings.append((slot_start.isoformat(), (slot_start + time_needed).isoformat()))
+                            time_needed -= time_needed
                         break
-                    elif slot_duration < time_needed:
-                        timings.append((slot_start.isoformat(), slot_end.isoformat()))
-                        time_needed -= slot_duration
+                            
+                if time_needed <= timedelta(): #Check if all homework time has been scheduled
+                    break
 
         else:
             print("Homework cannot be spaced out")
@@ -175,8 +192,6 @@ def getHomeworkTimings(request, homework):
             slot_start = datetime.fromisoformat(slot[0])
             slot_end = datetime.fromisoformat(slot[1])
             slot_duration = slot_end-slot_start
-            print("Slot duration: ", slot_duration.total_seconds())
-            print("Time Needed: ", time_needed.total_seconds())
             if slot_duration >= time_needed:
                 timings.append((slot_start.isoformat(), (slot_start + time_needed).isoformat()))
                 break
@@ -204,35 +219,81 @@ class AddHomework(APIView):
         
         if serializer.is_valid():
             # Save the new instance to the database
-            homework_instance =  serializer.save()
+            serializer.save()
 
-            timings = getHomeworkTimings(request, serializer.data)
+            existing_homeworks = self.request.user.homeworks.all()
 
-            ids = []
+            # Sort homeworks by due date and by completion time if due dates are the same
+            sorted_homeworks = sorted(existing_homeworks, key=lambda h: (
+                h.due_date,
+                h.estimated_completion_time
+            ))
 
-            for block in timings:
-                new_homework = {
-                    'summary': serializer.data.get("name"),
-                    'start': {
-                        'dateTime': block[0],
-                        'timeZone': 'Europe/London'
-                    },
-                    'end': {
-                        'dateTime': block[1],
-                        'timeZone': 'Europe/London'
-                    }
-                }
-        
-                ids.append(addEventToCalendar(request, new_homework))
+            # Assign priority based on the index in the sorted list
+            for index, homework in enumerate(sorted_homeworks):
+                homework.priority = index + 1  # Priority starts from 1
+                homework.save()  # Save the updated priority to the database
+
+            for homework in sorted_homeworks:
+                print("ASSIGNING " + str(homework.name) + " TO CALENDAR")
+                timings = getHomeworkTimings(request, homework)
+                if timings != homework.timings:
+                    if homework.event_id == None and (homework.event_ids ==None or len(homework.event_ids) <= 0):
+
+                        ids = []
+
+                        for block in timings:
+                            new_homework = {
+                                'summary': serializer.data.get("name"),
+                                'start': {
+                                    'dateTime': block[0],
+                                    'timeZone': 'Europe/London'
+                                },
+                                'end': {
+                                    'dateTime': block[1],
+                                    'timeZone': 'Europe/London'
+                                }
+                            }
+                    
+                            ids.append(addEventToCalendar(request, new_homework))
 
 
-            if len(ids)>1:
-                # Update the Homework instance with the event_id
-                homework_instance.event_ids = ids
-                homework_instance.save()
-            else:
-                homework_instance.event_id = ids[0]
-                homework_instance.save()
+                        if len(ids)>1:
+                            # Update the Homework instance with the event_id
+                            homework.event_ids = ids
+                            homework.save()
+                        else:
+                            homework.event_id = ids[0]
+                            homework.save()
+                    else:
+
+                        updated_homeworks = []
+                        for block in timings:
+                            print("Number of blocks: ", len(timings))
+                            print("Block timings: ", str(block))
+                            updated_homework = {
+                                'summary': homework.name,
+                                'start': {
+                                    'dateTime': block[0],
+                                    'timeZone': 'Europe/London'
+                                },
+                                'end': {
+                                    'dateTime': block[1],
+                                    'timeZone': 'Europe/London'
+                                }
+                            }
+                            updated_homeworks.append(updated_homework)
+
+
+                        if len(homework.event_ids) > 0:
+                                print("Split event: " +  str(homework.event_ids))
+                                if len(updated_homeworks) == len(homework.event_ids):
+                                    for i, event_id in enumerate(homework.event_ids):
+                                        updateCalendarEventTimings(request, event_id, updated_homeworks[i])
+                                else:
+                                    return Response({"Bad Request": "Error updating split homework as more blocks have been added than before"}, status=400)
+                        else:
+                                updateCalendarEventTimings(request, homework.event_id, updated_homework)
 
 
             return Response({"message": f"{request.data.get("name")} was successfully added to your calendar"}, status=status.HTTP_201_CREATED)
@@ -277,7 +338,7 @@ class GetCalendar(APIView):
 
 
         for event in events:
-            if event["summary"]:
+            if "summary" in event:
                 summary = event["summary"]
             else:
                 summary = "Untitled"
@@ -285,7 +346,8 @@ class GetCalendar(APIView):
             response_event = {
                 "summary": summary,
                 "start": event["start"],
-                "end": event["end"] 
+                "end": event["end"],
+                "id": event["id"] 
             }
             events_response.append(response_event)
 
@@ -307,8 +369,8 @@ class GetHomeworks(ListAPIView):
         # Add the 'id' to the serialized data manually
         response_data = []
         for homework, data in zip(queryset, serializer.data):
-            data_with_id = {**data, 'id': homework.id}
-            response_data.append(data_with_id)
+            data_with_ids = {**data, 'id': homework.id, 'event_id': homework.event_id, 'event_ids': homework.event_ids}
+            response_data.append(data_with_ids)
 
         return Response(response_data)
     

@@ -32,6 +32,10 @@ const AddHomework = ({ onAdd }) => {
     } catch (err) {
       console.log(err);
     }
+
+    setHomeworkDescription("");
+    setDueDate("");
+    setCompletionTime("");
   };
 
   return (
