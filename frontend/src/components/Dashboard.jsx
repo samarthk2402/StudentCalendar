@@ -4,7 +4,7 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { Container, Row, Col, Card } from "react-bootstrap";
+import { Container, Row, Col, Card, Placeholder } from "react-bootstrap";
 
 const Dashboard = forwardRef(({ homeworks }, ref) => {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -117,55 +117,64 @@ const Dashboard = forwardRef(({ homeworks }, ref) => {
 
   return (
     <Container fluid>
-      {loading ? (
-        <h5>Loading Calendar ...</h5>
-      ) : (
-        <>
-          <h5 style={{ marginTop: "10px", marginBottom: "10px" }}>Dashboard</h5>
-          <Col>
-            {Object.keys(week).map((day, index) => (
-              <Row key={index} className="mb-3">
-                <Col xs={12} md={12}>
-                  <Card
-                    style={{
-                      border: "1px solid #ddd", // Thin outline,
-                      borderColor: "var(--bs-secondary)",
-                      borderRadius: "10px", // Curved edges
-                      padding: "10px", // Padding inside the card
-                    }}
-                  >
-                    <h5 style={{ fontSize: "18px" }}>{day}</h5>
-                    <div className="text-secondary">
-                      {week[day] && week[day].length > 0
-                        ? week[day].map((event, index) => (
-                            <Card
-                              className={
-                                inHomeworks(event)
-                                  ? "bg-primary text-white"
-                                  : "bg-secondary text-white"
-                              }
-                              style={{
-                                paddingLeft: "10px", // Increase padding
-                                borderRadius: "15px", // Increase border radius
-                              }}
-                              key={index}
-                            >
-                              {formatTime(event.start.dateTime) +
-                                " - " +
-                                formatTime(event.end.dateTime) +
-                                "   " +
-                                event.summary}
-                            </Card>
-                          ))
-                        : "No events"}
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
-            ))}
-          </Col>
-        </>
-      )}
+      <>
+        <h5 style={{ marginTop: "10px", marginBottom: "10px" }}>Dashboard</h5>
+        <Col>
+          {Object.keys(week).map((day, index) => (
+            <Row key={index} className="mb-3">
+              <Col xs={12} md={12}>
+                <Card
+                  style={{
+                    border: "1px solid #ddd", // Thin outline,
+                    borderColor: "var(--bs-secondary)",
+                    borderRadius: "10px", // Curved edges
+                    padding: "10px", // Padding inside the card
+                  }}
+                >
+                  {loading ? (
+                    <>
+                      <Placeholder as={Card.Title} animation="glow">
+                        <Placeholder xs={1} />
+                      </Placeholder>
+                      <Placeholder as={Card.Text} animation="glow">
+                        <Placeholder xs={12} /> <Placeholder xs={12} />
+                      </Placeholder>
+                    </>
+                  ) : (
+                    <>
+                      <h5 style={{ fontSize: "18px" }}>{day}</h5>
+                      <div className="text-secondary">
+                        {week[day] && week[day].length > 0
+                          ? week[day].map((event, index) => (
+                              <Card
+                                className={
+                                  inHomeworks(event)
+                                    ? "bg-primary text-white"
+                                    : "bg-secondary text-white"
+                                }
+                                style={{
+                                  paddingLeft: "10px", // Increase padding
+                                  borderRadius: "15px", // Increase border radius
+                                }}
+                                key={index}
+                              >
+                                {formatTime(event.start.dateTime) +
+                                  " - " +
+                                  formatTime(event.end.dateTime) +
+                                  "   " +
+                                  event.summary}
+                              </Card>
+                            ))
+                          : "No events"}
+                      </div>
+                    </>
+                  )}
+                </Card>
+              </Col>
+            </Row>
+          ))}
+        </Col>
+      </>
     </Container>
   );
 });
