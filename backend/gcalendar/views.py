@@ -79,8 +79,11 @@ def generate_free_time_slots(request, weekday_hours, weekend_hours, due_date, ca
         conflicting_events = []
 
         for event in calendar_events:
-            event_start = datetime.fromisoformat(event["start"]["dateTime"])
-            event_end = datetime.fromisoformat(event["end"]["dateTime"])
+            try:
+                event_start = datetime.fromisoformat(event["start"]["dateTime"])
+                event_end = datetime.fromisoformat(event["end"]["dateTime"])
+            except:
+                break
             if (event_start > start_time and event_start < end_time) or (event_end > start_time and event_end <end_time) or (event_start < start_time and event_end > end_time):
                 conflicting_events.append(event)
 

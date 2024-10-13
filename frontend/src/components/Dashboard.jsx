@@ -134,10 +134,11 @@ const Dashboard = forwardRef(({ homeworks }, ref) => {
                   {loading ? (
                     <>
                       <Placeholder as={Card.Title} animation="glow">
-                        <Placeholder xs={1} />
+                        <Placeholder xs={1} style={{ borderRadius: "10px" }} />
                       </Placeholder>
                       <Placeholder as={Card.Text} animation="glow">
-                        <Placeholder xs={12} /> <Placeholder xs={12} />
+                        <Placeholder xs={12} style={{ borderRadius: "10px" }} />{" "}
+                        <Placeholder xs={12} style={{ borderRadius: "10px" }} />
                       </Placeholder>
                     </>
                   ) : (
@@ -149,12 +150,13 @@ const Dashboard = forwardRef(({ homeworks }, ref) => {
                               <Card
                                 className={
                                   inHomeworks(event)
-                                    ? "bg-primary text-white"
-                                    : "bg-secondary text-white"
+                                    ? "bg-secondary text-white"
+                                    : "text-white"
                                 }
                                 style={{
                                   paddingLeft: "10px", // Increase padding
                                   borderRadius: "15px", // Increase border radius
+                                  marginBottom: "10px",
                                 }}
                                 key={index}
                               >

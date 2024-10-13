@@ -27,9 +27,9 @@ const HomeworkList = ({ homeworks, onDelete }) => {
   };
 
   return (
-    <Container>
+    <>
       <h5 style={{ marginTop: "10px", marginBottom: "10px" }}>Homeworks</h5>
-      <ListGroup>
+      <ListGroup style={{ marginTop: "10px", marginBottom: "10px" }}>
         {homeworks !== null ? (
           homeworks.length > 0 ? (
             homeworks.map((homework, index) => (
@@ -67,7 +67,7 @@ const HomeworkList = ({ homeworks, onDelete }) => {
           </Spinner>
         )}
       </ListGroup>
-    </Container>
+    </>
   );
 };
 
