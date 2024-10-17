@@ -14,6 +14,8 @@ from google.oauth2.credentials import Credentials
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import HttpResponseRedirect
 from rest_framework.permissions import IsAuthenticated
+import tempfile
+import os
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -44,11 +46,19 @@ class GoogleOAuth2CallbackView(APIView):
         if "error" in request.GET:
             return Response({"error": request.GET.get("error")}, status=400)
 
-        client_secrets_file = r'C:\Users\samar\OneDrive\Documents\Dev\AutoHomeworkScheduler\client_secret_1086056028133-gdsavhkbqdhnls4luen4ccteoaat7ogi.apps.googleusercontent.com.json'
+        #client_secrets_file = r'C:\Users\samar\OneDrive\Documents\Dev\AutoHomeworkScheduler\client_secret_1086056028133-gdsavhkbqdhnls4luen4ccteoaat7ogi.apps.googleusercontent.com.json'
+        
+        # Get client secrets from environment variable
+        client_secrets_json = os.environ.get('GOOGLE_CLIENT_SECRETS_FILE')
 
+        # Write the client secrets to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(client_secrets_json.encode())
+            temp_file_path = temp_file.name
+        
         # Initialize the flow object
         flow = Flow.from_client_secrets_file(
-            client_secrets_file,
+            temp_file_path,
             scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid", "https://www.googleapis.com/auth/calendar"],
         )
         flow.redirect_uri = request.build_absolute_uri(reverse('google_callback'))
