@@ -71,7 +71,13 @@ const ProtectedRoute = ({ children }) => {
   };
 
   useEffect(() => {
-    authenticate();
+    try {
+      authenticate();
+    } catch {
+      console.log("no access token");
+      setAuthenticated(false);
+      navigate("/login");
+    }
   }, []);
 
   return authenticated ? children : <div>Loading</div>;

@@ -27,8 +27,8 @@ def get_user_google_credentials(user):
     user_credentials = UserCredentials.objects.get(user=user)
 
     credentials = Credentials(
-        token=user_credentials.access_token, 
-        refresh_token=user_credentials.refresh_token,
+        token=user_credentials.decrypted_access_token, 
+        refresh_token=user_credentials.decrypted_refresh_token,
         token_uri="https://oauth2.googleapis.com/token",
         client_id=settings.GOOGLE_CLIENT_ID,
         client_secret=settings.GOOGLE_CLIENT_SECRET
@@ -68,7 +68,6 @@ class GoogleOAuth2CallbackView(APIView):
         # Extract user information
         email = userinfo.get("email")
         username = userinfo.get("email").split('@')[0]
-        name = userinfo.get("name")
 
         # Check if the user already exists by email
         try:
