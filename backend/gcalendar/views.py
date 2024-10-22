@@ -213,18 +213,8 @@ def getHomeworkTimings(request, homework):
             
     return timings
 
-
-class AddHomework(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, format=None):
-        serializer = HomeworkSerializer(data=request.data, context={'request': request})
-        
-        if serializer.is_valid():
-            # Save the new instance to the database
-            serializer.save()
-
-            existing_homeworks = self.request.user.homeworks.all()
+def scheduleHomeworks(request):
+            existing_homeworks = request.user.homeworks.all()
 
             # Sort homeworks by due date and by completion time if due dates are the same
             sorted_homeworks = sorted(existing_homeworks, key=lambda h: (
@@ -247,7 +237,7 @@ class AddHomework(APIView):
 
                         for block in timings:
                             new_homework = {
-                                'summary': serializer.data.get("name"),
+                                'summary': request.data.get("name"),
                                 'start': {
                                     'dateTime': block[0],
                                     'timeZone': 'Europe/London'
@@ -298,6 +288,17 @@ class AddHomework(APIView):
                         else:
                                 updateCalendarEventTimings(request, homework.event_id, updated_homework)
 
+                    
+class AddHomework(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        serializer = HomeworkSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            # Save the new instance to the database
+            serializer.save()
+            scheduleHomeworks(request)
 
             return Response({"message": f"{request.data.get("name")} was successfully added to your calendar"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -354,6 +355,7 @@ class GetCalendar(APIView):
             }
             events_response.append(response_event)
 
+        scheduleHomeworks(request) # reschedule homeworks incase clashing calendar event has been added
 
         return Response({"events": events_response}, status=200)
     
@@ -402,5 +404,9 @@ class DeleteHomework(APIView):
 
         homework.delete()
 
+        scheduleHomeworks(request)
+
         return Response({"message": "Deleted successfully!"}, status=204)
+    
+
 

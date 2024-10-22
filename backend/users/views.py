@@ -16,6 +16,7 @@ from django.http import HttpResponseRedirect
 from rest_framework.permissions import IsAuthenticated
 import tempfile
 import os
+import uuid
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -73,7 +74,6 @@ class GoogleOAuth2CallbackView(APIView):
         # Use the credentials to build the service object
         service = build('oauth2', 'v2', credentials=credentials)
         userinfo = service.userinfo().get().execute()
-
 
         # Extract user information
         email = userinfo.get("email")

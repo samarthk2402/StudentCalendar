@@ -76,6 +76,7 @@ const Dashboard = forwardRef(({ homeworks }, ref) => {
   };
 
   const getCalendar = async () => {
+    setLoading(true);
     const options = {
       method: "GET",
       headers: {
