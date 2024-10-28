@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Container, ListGroup, Button, Spinner } from "react-bootstrap";
+import { Card, ListGroup, Button, Spinner } from "react-bootstrap";
+import classchartslogo from "../assets/classchartslogo.png";
 
 const HomeworkList = ({ homeworks, onDelete }) => {
   const apiUrl = import.meta.env.VITE_API_URL;

@@ -4,6 +4,7 @@ import "./Home.css";
 import Dashboard from "../components/Dashboard";
 import AddHomework from "../components/AddHomework";
 import HomeworkList from "../components/HomeworkList";
+import ClassChartsLogin from "../components/ClassChartsLogin";
 
 const Home = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -70,10 +71,16 @@ const Home = () => {
     <>
       <Navbar className="bg-body-secondary w-100">
         <Container fluid>
-          <Navbar.Brand href="#home">Student Calendar</Navbar.Brand>
+          <Navbar.Brand>Student Calendar</Navbar.Brand>
           <Navbar.Toggle />
           <Navbar.Collapse className="justify-content-end">
-            <img src={profilePictureUrl} className="profilepicture" />
+            <img
+              src={profilePictureUrl}
+              className="profilepicture"
+              onError={(event) => {
+                event.target.classList.add("hidden");
+              }}
+            />
             <Navbar.Text>{name}</Navbar.Text>
           </Navbar.Collapse>
         </Container>
@@ -101,6 +108,7 @@ const Home = () => {
                   getHomeworks();
                 }}
               />
+              <ClassChartsLogin />
             </Container>
           </Col>
         </Row>
