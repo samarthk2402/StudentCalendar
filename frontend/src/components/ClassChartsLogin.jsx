@@ -1,21 +1,55 @@
 import React from "react";
 import { Button, Modal, Form, Spinner, Alert } from "react-bootstrap";
 import classchartslogo from "../assets/classchartslogo.png";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { CheckCircleFill } from "react-bootstrap-icons";
+
 const ClassChartsLogin = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
   const [show, setShow] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingLogin, setLoadingLogin] = useState(false);
+
+  const [linked, setLinked] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [code, setCode] = useState(null);
   const [dob, setDOB] = useState(null);
 
   const [alert, setAlert] = useState("");
 
+  const checkIfLinked = async () => {
+    try {
+      const res = await fetch(apiUrl + "classcharts/verify", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("ACCESS_TOKEN")}`, // Send the token
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json();
+      console.log(data);
+      if (res.ok) {
+        setLinked(true);
+      } else {
+        setLinked(false);
+      }
+    } catch (error) {
+      console.log(error);
+      setLinked(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkIfLinked();
+  });
+
   const handleLogin = async (e) => {
     console.log(dob);
     e.preventDefault();
-    setLoading(true);
+    setLoadingLogin(true);
     try {
       const res = await fetch(apiUrl + "classcharts/login", {
         method: "POST",
@@ -40,30 +74,42 @@ const ClassChartsLogin = () => {
       const data = await res.json();
       console.log(error);
     } finally {
-      setLoading(false);
+      setLoadingLogin(false);
       setCode(null);
       setDOB(null);
+      setShow(false);
     }
   };
   return (
-    <>
-      <Button
-        variant="secondary"
-        style={{ marginTop: "20px", padding: "10px" }}
-        onClick={() => {
-          setShow(true);
-          setAlert("");
-        }}
-      >
+    <div style={{ marginRight: "20px" }}>
+      {loading ? null : linked ? (
         <div>
           <img
             style={{ width: "30px", marginRight: "10px" }}
             src={classchartslogo}
             alt="ClassCharts Logo"
           />
-          Link Classcharts Student account
+          Account Synced
         </div>
-      </Button>
+      ) : (
+        <Button
+          variant="dark"
+          style={{ padding: "5px" }}
+          onClick={() => {
+            setShow(true);
+            setAlert("");
+          }}
+        >
+          <div>
+            <img
+              style={{ width: "30px", marginRight: "10px" }}
+              src={classchartslogo}
+              alt="ClassCharts Logo"
+            />
+            Sync with classcharts
+          </div>
+        </Button>
+      )}
 
       <Modal
         show={show}
@@ -96,7 +142,7 @@ const ClassChartsLogin = () => {
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            {loading ? (
+            {loadingLogin ? (
               <Spinner />
             ) : (
               <Button
@@ -111,7 +157,7 @@ const ClassChartsLogin = () => {
           </Modal.Footer>
         </Form>
       </Modal>
-    </>
+    </div>
   );
 };
 

@@ -74,11 +74,13 @@ const Home = () => {
           <Navbar.Brand>Student Calendar</Navbar.Brand>
           <Navbar.Toggle />
           <Navbar.Collapse className="justify-content-end">
+            <ClassChartsLogin />
             <img
               src={profilePictureUrl}
               className="profilepicture"
               onError={(event) => {
                 event.target.classList.add("hidden");
+                console.log("Error with profile picture");
               }}
             />
             <Navbar.Text>{name}</Navbar.Text>
@@ -108,7 +110,6 @@ const Home = () => {
                   getHomeworks();
                 }}
               />
-              <ClassChartsLogin />
             </Container>
           </Col>
         </Row>
