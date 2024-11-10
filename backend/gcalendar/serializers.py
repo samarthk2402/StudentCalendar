@@ -8,7 +8,7 @@ class HomeworkSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Get the user from the context
-        user = self.context['request'].user
+        user = self.context['user']
 
         # Convert estimated_completion_time to seconds
         estimated_completion_time_minutes = validated_data.get('estimated_completion_time', 0)

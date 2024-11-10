@@ -51,23 +51,7 @@ class ClassChartsLogin(APIView):
         session_id, student_id = login(code, dob)
 
         if session_id and student_id:
-            # url = f"https://www.classcharts.com/apiv2student/homeworks/{student_id}?display_date=due_date&from={date.today()}&to={date.today() + timedelta(days=30)}"
-            # headers = {
-            # "Authorization": f"Basic {session_id}"
-            # }
-            # response = requests.request("GET", url, headers=headers)
             
-            # response_data = response.json()
-
-            # # Check for errors in the response
-            # if response.status_code != 200:
-            #     raise Exception(f"Error {response.status_code}: {response_data.get('error', 'Unknown error')}")
-            
-            # # Extract list of  incompleted homeworks
-            # homework_list = response_data.get("data", [])
-            # for homework in homework_list:
-            #     if homework.get('status').get('ticked') == "yes":
-            #         homework_list.remove(homework)
 
             user = request.user
             user_credentials, created = UserCredentials.objects.update_or_create(
@@ -103,16 +87,17 @@ class VerifyClassChartsLogin(APIView):
         if response.status_code != 200:
             return Response({"error":f"Error {response.status_code}: {response_data.get('error', 'Unknown error')}"}, status=status.HTTP_400_BAD_REQUEST)
 
-        new_session_id = response_data.get("meta").get("session_id", "")
-
-        if new_session_id != "":
+        try:
+            new_session_id = response_data.get("meta").get("session_id")
 
             UserCredentials.objects.update_or_create(
                     user=user,
                     defaults={
-                        'classcharts_session_id': response_data.get("meta").get("session_id"),
+                        'classcharts_session_id': new_session_id,
                     }
             )
 
-        return Response({"message": "user authenticated"}, status=status.HTTP_200_OK)
+            return Response({"message": "user authenticated"}, status=status.HTTP_200_OK)
+        except:
+            return Response({"message": "user not synced with classcharts"}, status=status.HTTP_204_NO_CONTENT)
     

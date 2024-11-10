@@ -26,9 +26,9 @@ def get_user_google_credentials(user):
 
     return credentials
 
-def addEventToCalendar(request, event):
+def addEventToCalendar(user, event):
     # Get user's Google credentials
-    credentials = get_user_google_credentials(request.user)
+    credentials = get_user_google_credentials(user)
 
     # Use the credentials to build the Google Calendar service object
     service = build('calendar', 'v3', credentials=credentials)
@@ -37,9 +37,9 @@ def addEventToCalendar(request, event):
 
     return event.get("id")
 
-def updateCalendarEventTimings(request, event_id, timings):
+def updateCalendarEventTimings(user, event_id, timings):
     # Get user's Google credentials
-    credentials = get_user_google_credentials(request.user)
+    credentials = get_user_google_credentials(user)
 
     # Use the credentials to build the Google Calendar service object
     service = build('calendar', 'v3', credentials=credentials)
@@ -47,7 +47,7 @@ def updateCalendarEventTimings(request, event_id, timings):
     print("Event updated: ", event.get("summary"))
 
 
-def generate_free_time_slots(request, weekday_hours, weekend_hours, due_date, calendar_events, buffer_time, priority):
+def generate_free_time_slots(user, weekday_hours, weekend_hours, due_date, calendar_events, buffer_time, priority):
     timezone = pytz.timezone('Europe/London')
 
     # Check if due_date is naive and localize if necessary
@@ -88,7 +88,7 @@ def generate_free_time_slots(request, weekday_hours, weekend_hours, due_date, ca
                 conflicting_events.append(event)
 
         for event in conflicting_events: # Dont take into account homeworks as they will be rearranged according to priority
-            for homework in request.user.homeworks.all():
+            for homework in user.homeworks.all():
                 if event["id"] == homework.event_id or event["id"] in homework.event_ids:
                     event_start = datetime.fromisoformat(event["start"]["dateTime"])
                     event_end = datetime.fromisoformat(event["end"]["dateTime"])
@@ -119,8 +119,8 @@ def generate_free_time_slots(request, weekday_hours, weekend_hours, due_date, ca
 
     return free_time_slots
 
-def getHomeworkTimings(request, homework):
-    credentials = get_user_google_credentials(request.user)
+def getHomeworkTimings(user, homework):
+    credentials = get_user_google_credentials(user)
     service = build('calendar', 'v3', credentials=credentials)
 
     weekday_work_hours = (19, 21)
@@ -137,7 +137,7 @@ def getHomeworkTimings(request, homework):
     
     events = events_result.get('items', [])
 
-    free_slots = generate_free_time_slots(request, weekday_work_hours, weekend_work_hours, homework.due_date, events, timedelta(minutes=15), homework.priority)
+    free_slots = generate_free_time_slots(user, weekday_work_hours, weekend_work_hours, homework.due_date, events, timedelta(minutes=15), homework.priority)
 
     timings = []
 
@@ -213,8 +213,8 @@ def getHomeworkTimings(request, homework):
             
     return timings
 
-def scheduleHomeworks(request):
-            existing_homeworks = request.user.homeworks.all()
+def scheduleHomeworks(user):
+            existing_homeworks = user.homeworks.all()
 
             # Sort homeworks by due date and by completion time if due dates are the same
             sorted_homeworks = sorted(existing_homeworks, key=lambda h: (
@@ -229,7 +229,7 @@ def scheduleHomeworks(request):
 
             for homework in sorted_homeworks:
                 print("ASSIGNING " + str(homework.name) + " TO CALENDAR")
-                timings = getHomeworkTimings(request, homework)
+                timings = getHomeworkTimings(user, homework)
                 if timings != homework.timings:
                     if homework.event_id == None and (homework.event_ids ==None or len(homework.event_ids) <= 0):
 
@@ -237,7 +237,7 @@ def scheduleHomeworks(request):
 
                         for block in timings:
                             new_homework = {
-                                'summary': request.data.get("name"),
+                                'summary': homework.name,
                                 'start': {
                                     'dateTime': block[0],
                                     'timeZone': 'Europe/London'
@@ -248,7 +248,7 @@ def scheduleHomeworks(request):
                                 }
                             }
                     
-                            ids.append(addEventToCalendar(request, new_homework))
+                            ids.append(addEventToCalendar(user, new_homework))
 
 
                         if len(ids)>1:
@@ -282,23 +282,23 @@ def scheduleHomeworks(request):
                                 print("Split event: " +  str(homework.event_ids))
                                 if len(updated_homeworks) == len(homework.event_ids):
                                     for i, event_id in enumerate(homework.event_ids):
-                                        updateCalendarEventTimings(request, event_id, updated_homeworks[i])
+                                        updateCalendarEventTimings(user, event_id, updated_homeworks[i])
                                 else:
                                     return Response({"Bad Request": "Error updating split homework as more blocks have been added than before"}, status=400)
                         else:
-                                updateCalendarEventTimings(request, homework.event_id, updated_homework)
+                                updateCalendarEventTimings(user, homework.event_id, updated_homework)
 
                     
 class AddHomework(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-        serializer = HomeworkSerializer(data=request.data, context={'request': request})
+        serializer = HomeworkSerializer(data=request.data, context={'user': request.user})
         
         if serializer.is_valid():
             # Save the new instance to the database
             serializer.save()
-            scheduleHomeworks(request)
+            scheduleHomeworks(request.user)
 
             return Response({"message": f"{request.data.get("name")} was successfully added to your calendar"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -355,7 +355,7 @@ class GetCalendar(APIView):
             }
             events_response.append(response_event)
 
-        scheduleHomeworks(request) # reschedule homeworks incase clashing calendar event has been added
+        scheduleHomeworks(request.user) # reschedule homeworks incase clashing calendar event has been added
 
         return Response({"events": events_response}, status=200)
     
@@ -404,7 +404,7 @@ class DeleteHomework(APIView):
 
         homework.delete()
 
-        scheduleHomeworks(request)
+        scheduleHomeworks(request.user)
 
         return Response({"message": "Deleted successfully!"}, status=204)
     
