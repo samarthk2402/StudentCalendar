@@ -49,8 +49,6 @@ def updateCalendarEventTimings(user, event_id, timings):
 
 def generate_free_time_slots(user, weekday_hours, weekend_hours, due_date, calendar_events, buffer_time, priority):
     timezone = pytz.timezone('Europe/London')
-
-    # Check if due_date is naive and localize if necessary
     if due_date.tzinfo is None:
         due_date = timezone.localize(due_date)
 
@@ -63,7 +61,7 @@ def generate_free_time_slots(user, weekday_hours, weekend_hours, due_date, calen
     # Loop through each day between today and the due date (inclusive)
     current_date = today
     while current_date <= due_date:
-        # Determine if the current day is a weekday (Monday=0, Sunday=6)
+        # Check if the current day is a weekday
         if current_date.weekday() < 5:
             start_hour, end_hour = weekday_hours  # Use weekday working hours
         else:
@@ -78,7 +76,7 @@ def generate_free_time_slots(user, weekday_hours, weekend_hours, due_date, calen
 
         conflicting_events = []
 
-        for event in calendar_events:
+        for event in calendar_events: # check for all conflicting events within study time slot
             try:
                 event_start = datetime.fromisoformat(event["start"]["dateTime"])
                 event_end = datetime.fromisoformat(event["end"]["dateTime"])
@@ -96,7 +94,7 @@ def generate_free_time_slots(user, weekday_hours, weekend_hours, due_date, calen
                         print("Rearranging homework: ", event.get("summary"))
                         conflicting_events.remove(event)
 
-        for event in conflicting_events:
+        for event in conflicting_events: # create time blocks around the conflicting events
             print("Conflicting event: ", event.get("summary"))
             event_start = datetime.fromisoformat(event["start"]["dateTime"])
             event_end = datetime.fromisoformat(event["end"]["dateTime"])
@@ -117,7 +115,7 @@ def generate_free_time_slots(user, weekday_hours, weekend_hours, due_date, calen
         current_date += timedelta(days=1)
     
 
-    return free_time_slots
+    return free_time_slots # return the available time blocks found in the user's chosen study hours
 
 def getHomeworkTimings(user, homework):
     credentials = get_user_google_credentials(user)
@@ -229,9 +227,9 @@ def scheduleHomeworks(user):
 
             for homework in sorted_homeworks:
                 print("ASSIGNING " + str(homework.name) + " TO CALENDAR")
-                timings = getHomeworkTimings(user, homework)
-                if timings != homework.timings:
-                    if homework.event_id == None and (homework.event_ids ==None or len(homework.event_ids) <= 0):
+                timings = getHomeworkTimings(user, homework) # get the time block(s) that the homework is to be scheduled to
+                if timings != homework.timings: # don't reschedule homework if the timings dont need to change
+                    if homework.event_id == None and (homework.event_ids ==None or len(homework.event_ids) <= 0): # true if the homework is new and not been added to the calendar before
 
                         ids = []
 
@@ -240,7 +238,7 @@ def scheduleHomeworks(user):
                                 'summary': homework.name,
                                 'start': {
                                     'dateTime': block[0],
-                                    'timeZone': 'Europe/London'
+                                    'timeZone': 'Europe/London' 
                                 },
                                 'end': {
                                     'dateTime': block[1],
@@ -258,7 +256,7 @@ def scheduleHomeworks(user):
                         else:
                             homework.event_id = ids[0]
                             homework.save()
-                    else:
+                    else: # the homeworks timings must be updated due to a change in priorities
 
                         updated_homeworks = []
                         for block in timings:

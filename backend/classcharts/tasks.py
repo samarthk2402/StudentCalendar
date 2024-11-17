@@ -16,7 +16,7 @@ def daily_task():
         usercredentials__classcharts_session_id__isnull=False  # Check if classcharts_session_id is not None
     )
 
-    while not stop_event.wait(300):  # 86400 seconds = 24 hours
+    while not stop_event.wait(86400):  # 86400 seconds = 24 hours
         # Perform the task for each user
         for user in synced_users:
             print(f"Running daily task {str(i)} for {user.username}")

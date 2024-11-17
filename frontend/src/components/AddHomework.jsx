@@ -36,14 +36,13 @@ const AddHomework = ({ onAdd }) => {
 
     try {
       const res = await fetch(apiUrl + "gcalendar/homework/add", options);
-      const data = await res.json();
       onAdd();
       setShowAlert("success");
     } catch (err) {
       console.log(err);
       setShowAlert("danger");
     } finally {
-      setLoading(false); // Set loading to false once the request completes (success or error)
+      setLoading(false);
       handleClose();
     }
 

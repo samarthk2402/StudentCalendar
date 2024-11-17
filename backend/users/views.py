@@ -46,8 +46,6 @@ class GoogleOAuth2CallbackView(APIView):
 
         if "error" in request.GET:
             return Response({"error": request.GET.get("error")}, status=400)
-
-        #client_secrets_file = r'C:\Users\samar\OneDrive\Documents\Dev\AutoHomeworkScheduler\client_secret_1086056028133-gdsavhkbqdhnls4luen4ccteoaat7ogi.apps.googleusercontent.com.json'
         
         # Get client secrets from environment variable
         client_secrets_json = os.environ.get('GOOGLE_CLIENT_SECRETS_FILE')

@@ -89,12 +89,10 @@ const Home = () => {
       </Navbar>
       <Container fluid>
         <Row>
-          {/* Dashboard takes up 9 columns (out of 12) */}
           <Col xs={12} md={8}>
             <Dashboard ref={dashboardRef} homeworks={homework} />
           </Col>
 
-          {/* AddHomework takes up 3 columns (out of 12) */}
           <Col xs={12} md={4}>
             <Container>
               <HomeworkList
