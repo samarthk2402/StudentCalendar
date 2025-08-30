@@ -167,8 +167,6 @@ GOOGLE_REDIRECT_URI = 'http://127.0.0.1:8000/google/callback/'
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-FRONTEND_DOMAIN = "http://localhost:5173"
-
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 
 # SESSION_COOKIE_HTTPONLY = True

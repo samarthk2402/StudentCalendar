@@ -16,6 +16,8 @@ from django.http import HttpResponseRedirect
 from rest_framework.permissions import IsAuthenticated
 import tempfile
 import os
+from dotenv import load_dotenv
+load_dotenv()
 import uuid
 
 def get_tokens_for_user(user):
@@ -112,7 +114,7 @@ class GoogleOAuth2CallbackView(APIView):
         # Convert data to a query string format
         query_string = '&'.join(f'{key}={value}' for key, value in data.items())
         # Redirect with query string
-        redirect_url = f"{settings.FRONTEND_DOMAIN}?{query_string}"
+        redirect_url = f"{os.environ.get("FRONTEND_DOMAIN")}?{query_string}"
         return HttpResponseRedirect(redirect_url)
 
 
