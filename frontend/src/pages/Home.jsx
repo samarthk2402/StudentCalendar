@@ -74,7 +74,7 @@ const Home = () => {
           <Navbar.Brand>Student Calendar</Navbar.Brand>
           <Navbar.Toggle />
           <Navbar.Collapse className="justify-content-end">
-            <ClassChartsLogin />
+            {/* <ClassChartsLogin /> */}
             <img
               src={profilePictureUrl}
               className="profilepicture"

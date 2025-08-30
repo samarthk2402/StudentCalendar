@@ -12,6 +12,7 @@ from .models import Homework
 from .serializers import HomeworkSerializer
 from rest_framework import status
 import pytz
+from googleapiclient.errors import HttpError
 
 def get_user_google_credentials(user):
     user_credentials = UserCredentials.objects.get(user=user)
@@ -395,10 +396,24 @@ class DeleteHomework(APIView):
 
         if len(homework.event_ids) > 0:
             for event_id in homework.event_ids:
-                service.events().delete(calendarId='primary', eventId=event_id).execute()
+                try:
+                    service.events().delete(calendarId="primary", eventId=event_id).execute()
+                    print("Event deleted successfully.")
+                except HttpError as error:
+                    if error.resp.status == 404:
+                        print("Event not found.")
+                    else:
+                        raise
         else:
             if homework.event_id:
-                service.events().delete(calendarId='primary', eventId=homework.event_id).execute()
+                try:
+                    service.events().delete(calendarId="primary", eventId=homework.event_id).execute()
+                    print("Event deleted successfully.")
+                except HttpError as error:
+                    if error.resp.status == 404:
+                        print("Event not found.")
+                    else:
+                        raise
 
         homework.delete()
 
