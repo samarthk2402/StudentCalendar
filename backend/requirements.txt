@@ -4,6 +4,7 @@ djangorestframework>=3.15.0
 
 # CockroachDB Django adapter
 django-cockroachdb>=5.0
+dj_database_url
 
 # Google API client libraries
 google-api-python-client>=2.140.0
