@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Homework
 
 class HomeworkSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Homework
         fields = ['name', 'estimated_completion_time', 'due_date']

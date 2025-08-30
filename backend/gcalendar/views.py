@@ -296,7 +296,9 @@ class AddHomework(APIView):
         
         if serializer.is_valid():
             # Save the new instance to the database
-            serializer.save()
+            homework_instance = serializer.save()
+            # Print the ID assigned by the database
+            print("New Homework ID:", homework_instance.id)
             scheduleHomeworks(request.user)
 
             return Response({"message": f"{request.data.get("name")} was successfully added to your calendar"}, status=status.HTTP_201_CREATED)
@@ -373,7 +375,7 @@ class GetHomeworks(ListAPIView):
         # Add the 'id' to the serialized data manually
         response_data = []
         for homework, data in zip(queryset, serializer.data):
-            data_with_ids = {**data, 'id': homework.id, 'event_id': homework.event_id, 'event_ids': homework.event_ids}
+            data_with_ids = {**data, 'id': str(homework.id), 'event_id': homework.event_id, 'event_ids': homework.event_ids}
             response_data.append(data_with_ids)
 
         return Response(response_data)
@@ -382,7 +384,8 @@ class DeleteHomework(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, format=None):
-        homework_id = request.data.get("id")
+        homework_id = int(request.data.get("id"))
+        print(homework_id)
         homework = Homework.objects.get(id=homework_id)
 
         if homework == None:
